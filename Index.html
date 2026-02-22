@@ -96,12 +96,57 @@ Save
 <option value="episodes">Episodes</option>
 <option value="theories">Fan Theories</option>
 <option value="faq">FAQ</option>
+<option value="power_scaling">/option>
 </select>
 
 <script>
 
+/* ---------------- TOPIC KNOWLEDGE ---------------- */
+
+const communityTopics = {
+
+  general: {
+    "what is skibidi toilet": "Skibidi Toilet is a legendary YouTube series created by DaFuq!?Boom!",
+    "who created skibidi toilet": "It was created by DaFuq!?Boom! or alexey"
+  },
+
+  lore: {
+    "story": "The series shows a war between g-toilet's forces vs the 3 factions .",
+    "origin": "The origin of Skibidi Toilets is still mystery in the series."
+  },
+
+  characters: {
+    "titan cameraman": "Titan Cameraman is the strongest alliance member.",
+    "tv man": "TV Man is a secretive race with some best abilities."
+  },
+
+  episodes: {
+    "first episode": "The first episode introduced the Skibidi Toilet.",
+    "latest episode": "New episodes expand the story, production and shows the evolution of the series."
+  },
+
+  theories: {
+    "who will win": "Many fans think the skibidi alliance will win eventually.",
+    "strongest character": "Titan cameraman is considered one of the strongest charectors."
+  },
+
+  power_scaling: {
+    "titan camera man vs titan speaker man": "titan camera man is stronger."
+  },
+
+  faq: {
+    "is skibidi toilet real": "No, it's fictional maybe ;."
+  }
+
+};
+
+/* ---------------- STORAGE ---------------- */
+
+let chats = JSON.parse(localStorage.getItem("ai_chats") || "{}");
+let currentChatId = localStorage.getItem("current_chat") || "default";
 
 </script>
+
 /* ---------------- STORAGE ---------------- */
 
 let chats = JSON.parse(localStorage.getItem("ai_chats") || "{}")
