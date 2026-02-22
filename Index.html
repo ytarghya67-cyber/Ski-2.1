@@ -86,7 +86,22 @@ Save
 </div>
 
 
+<select>
+  
+  <!-- Chat UI / input area -->
+<select id="topicSelect">
+<option value="general">General</option>
+<option value="lore">Lore</option>
+<option value="characters">Characters</option>
+<option value="episodes">Episodes</option>
+<option value="theories">Fan Theories</option>
+<option value="faq">FAQ</option>
+</select>
+
 <script>
+
+
+</script>
 /* ---------------- STORAGE ---------------- */
 
 let chats = JSON.parse(localStorage.getItem("ai_chats") || "{}")
