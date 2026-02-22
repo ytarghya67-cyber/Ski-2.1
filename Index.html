@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Universal AI Chat</title>
+
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body { font-family: system-ui, sans-serif; }
+.chat-scroll::-webkit-scrollbar { width:6px }
+.chat-scroll::-webkit-scrollbar-thumb { background:#ccc; border-radius:10px }
+</style>
+</head>
+
+<body class="bg-gray-100">
+
+<div class="flex h-screen">
+
+<!-- SIDEBAR -->
+<div class="w-72 bg-white border-r flex flex-col">
+
+<div class="p-4 border-b flex justify-between items-center">
+<h1 class="font-bold text-lg">Universal AI</h1>
+<button onclick="openSettings()" class="text-gray-500 hover:text-black">⚙️</button>
+</div>
+
+<button onclick="newChat()" class="m-4 bg-black text-white rounded-lg p-2">
++ New Chat
+</button>
+
+<div id="chatHistory" class="flex-1 overflow-y-auto"></div>
+
+</div>
+
+<!-- MAIN -->
+<div class="flex-1 flex flex-col">
+
+<!-- CHAT AREA -->
+<div id="chatContainer" class="flex-1 overflow-y-auto p-6 space-y-4 chat-scroll"></div>
+
+<!-- INPUT -->
+<div class="p-4 border-t bg-white">
+<div class="flex gap-2">
+<input id="messageInput"
+class="flex-1 border rounded-lg p-3 outline-none"
+placeholder="Ask anything..."
+onkeydown="if(event.key==='Enter')sendMessage()"
+/>
+<button onclick="sendMessage()" class="bg-black text-white px-6 rounded-lg">
+Send
+</button>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settingsModal" class="fixed inset-0 hidden items-center justify-center bg-black/40">
+<div class="bg-white rounded-xl p-6 w-96 space-y-4">
+
+<h2 class="text-xl font-bold">Settings</h2>
+
+<div>
+<label class="text-sm">OpenRouter API Key</label>
+<input id="apiKey" class="w-full border rounded p-2 mt-1"/>
+</div>
+
+<div>
+<label class="text-sm">Model Name</label>
+<input id="modelName" class="w-full border rounded p-2 mt-1"
+placeholder="openai/gpt-4o-mini"/>
+</div>
+
+<div class="flex justify-end gap-2">
+<button onclick="closeSettings()" class="px-4 py-2">Cancel</button>
+<button onclick="saveSettings()" class="bg-black text-white px-4 py-2 rounded">
+Save
+</button>
+</div>
+
+</div>
+</div>
+
+
+<script>
+/* ---------------- STORAGE ---------------- */
+
+let chats = JSON.parse(localStorage.getItem("ai_chats") || "{}")
+let currentChatId = localStorage.getItem("current_chat") || null
+
+function saveChats(){
+localStorage.setItem("ai_chats", JSON.stringify(chats))
+}
+
+function saveCurrent(){
+localStorage.setItem("current_chat", currentChatId)
+}
+
+/* ---------------- CHAT MANAGEMENT ---------------- */
+
+function newChat(){
+const id = Date.now().toString()
+chats[id] = []
+currentChatId = id
+saveChats()
+saveCurrent()
+renderHistory()
+renderMessages()
+}
+
+function selectChat(id){
+currentChatId = id
+saveCurrent()
+renderMessages()
+}
+
+function renderHistory(){
+const container = document.getElementById("chatHistory")
+container.innerHTML = ""
+
+Object.keys(chats).reverse().forEach(id=>{
+const btn = document.createElement("button")
+btn.className = "w-full text-left p-3 hover:bg-gray-100 border-b"
+btn.innerText = chats[id][0]?.content?.slice(0,30) || "New Chat"
+btn.onclick = ()=>selectChat(id)
+container.appendChild(btn)
+})
+}
+
+/* ---------------- UI RENDER ---------------- */
+
+function renderMessages(){
+const container = document.getElementById("chatContainer")
+container.innerHTML = ""
+
+if(!currentChatId) return
+
+chats[currentChatId].forEach(msg=>{
+const div = document.createElement("div")
+
+if(msg.role==="user"){
+div.className="flex justify-end"
+div.innerHTML=`<div class="bg-black text-white px-4 py-3 rounded-xl max-w-xl">${msg.content}</div>`
+}else{
+div.className="flex justify-start"
+div.innerHTML=`<div class="bg-white border px-4 py-3 rounded-xl max-w-xl">${msg.content}</div>`
+}
+
+container.appendChild(div)
+})
+
+container.scrollTop = container.scrollHeight
+}
+
+/* ---------------- SEND MESSAGE ---------------- */
+
+async function sendMessage(){
+const input = document.getElementById("messageInput")
+const text = input.value.trim()
+if(!text) return
+
+if(!currentChatId) newChat()
+
+chats[currentChatId].push({role:"user",content:text})
+input.value=""
+renderMessages()
+saveChats()
+
+const loadingId = addLoading()
+
+try{
+const response = await callAI()
+removeLoading(loadingId)
+
+chats[currentChatId].push({
+role:"assistant",
+content:response
+})
+
+saveChats()
+renderMessages()
+renderHistory()
+
+}catch(e){
+removeLoading(loadingId)
+alert("Error: "+e.message)
+}
+}
+
+/* ---------------- LOADING UI ---------------- */
+
+function addLoading(){
+const container = document.getElementById("chatContainer")
+const div = document.createElement("div")
+const id = Date.now()
+div.id="load"+id
+div.className="flex"
+div.innerHTML=`<div class="bg-white border px-4 py-3 rounded-xl">Thinking...</div>`
+container.appendChild(div)
+container.scrollTop=container.scrollHeight
+return id
+}
+
+function removeLoading(id){
+document.getElementById("load"+id)?.remove()
+}
+
+/* ---------------- OPENROUTER API ---------------- */
+
+async function callAI(){
+const apiKey = localStorage.getItem("openrouter_key")
+const model = localStorage.getItem("openrouter_model") || "openai/gpt-4o-mini"
+
+if(!apiKey) throw new Error("Set API key in settings")
+
+const res = await fetch("https://openrouter.ai/api/v1/chat/completions",{
+method:"POST",
+headers:{
+"Authorization":"Bearer "+apiKey,
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+model:model,
+messages:chats[currentChatId]
+})
+})
+
+const data = await res.json()
+
+if(data.error) throw new Error(data.error.message)
+
+return data.choices?.[0]?.message?.content || "No response"
+}
+
+/* ---------------- SETTINGS ---------------- */
+
+function openSettings(){
+document.getElementById("settingsModal").classList.remove("hidden")
+document.getElementById("settingsModal").classList.add("flex")
+
+document.getElementById("apiKey").value =
+localStorage.getItem("openrouter_key") || ""
+
+document.getElementById("modelName").value =
+localStorage.getItem("openrouter_model") || ""
+}
+
+function closeSettings(){
+document.getElementById("settingsModal").classList.add("hidden")
+}
+
+function saveSettings(){
+localStorage.setItem(
+"openrouter_key",
+document.getElementById("apiKey").value.trim()
+)
+
+localStorage.setItem(
+"openrouter_model",
+document.getElementById("modelName").value.trim()
+)
+
+closeSettings()
+alert("Saved")
+}
+
+/* ---------------- INIT ---------------- */
+
+if(!currentChatId || !chats[currentChatId]) newChat()
+renderHistory()
+renderMessages()
+</script>
+
+</body>
+  </html>
