@@ -102,47 +102,6 @@ Save
 /* ---------------- TOPIC KNOWLEDGE ---------------- */
 
 const communityTopics = {
-
-  /* ---------- COMMUNITY ANSWER SYSTEM ---------- */
-
-const sendBtn = document.getElementById("sendBtn");
-const userInput = document.getElementById("userInput");
-const chatBox = document.getElementById("chatBox");
-const topicSelect = document.getElementById("topicSelect");
-
-sendBtn.addEventListener("click", handleMessage);
-
-function handleMessage() {
-  const message = userInput.value.toLowerCase().trim();
-  if (!message) return;
-
-  addMessage(message, "user");
-
-  const selectedTopic = topicSelect.value;
-  const topicData = communityTopics[selectedTopic] || {};
-
-  let reply = "I only answer community related questions.";
-
-  for (let key in topicData) {
-    if (message.includes(key)) {
-      reply = topicData[key];
-      break;
-    }
-  }
-
-  setTimeout(() => addMessage(reply, "bot"), 500);
-  userInput.value = "";
-}
-
-function addMessage(text, sender) {
-  const msg = document.createElement("div");
-  msg.className = sender === "user"
-    ? "text-right"
-    : "text-left text-green-400";
-
-  msg.textContent = text;
-  chatBox.appendChild(msg);
-  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
   general: {
@@ -178,12 +137,6 @@ function addMessage(text, sender) {
     "is skibidi toilet real": "No, it's fictional maybe ;."
   }
 
-};
-
-/* ---------------- STORAGE ---------------- */
-
-let chats = JSON.parse(localStorage.getItem("ai_chats") || "{}");
-let currentChatId = localStorage.getItem("current_chat") || "default";
 
 </script>
 
